@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  core:
+    build: .
+    image: concrete-app:latest
+    container_name: concrete
+    ipc: "shareable"
+    environment:
+      - CONCRETE_PORT=8080
+      - CONCRETE_LOG=2
+    # Exposed for external triggers or cross-host synchronization
+    ports:
+      - "8080:8080/udp" # Main ingestion port
+      - "8081:8081/udp" # Auxiliary trigger port
+    healthcheck:
+      test: ["CMD", "ps", "aux", "|", "grep", "concrete_core"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  tester:
+    image: concrete-app:latest
+    container_name: tester
+    depends_on:
+      core:
+        condition: service_started
+    ipc: "service:core"
+    network_mode: "service:core" # Sharing network stack for low-latency loopback testing
+    volumes:
+      - ./scripts/test_functional.sh:/app/scripts/test_functional.sh
+    working_dir: /app
+    # Executing the refined functional test suite
+    command: sh ./scripts/test_functional.sh

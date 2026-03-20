@@ -1,55 +1,25 @@
-# Prerequisites
-*.d
+# --- Build Artifacts ---
+# Ignoramos las carpetas completas donde el Makefile deposita los resultados
+bin/
+obj/
 
-# Object files
+# Por si acaso alguien compila manualmente en el root
 *.o
-*.ko
-*.obj
-*.elf
+*.lst
+concrete_core
+concrete_trigger
 
-# Linker output
-*.ilk
-*.map
-*.exp
+# --- Editor & IDEs ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 
-# Precompiled Headers
-*.gch
-*.pch
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-# debug information files
-*.dwo
+# --- Docker & Logs ---
+*.log
+.docker_tmp/
