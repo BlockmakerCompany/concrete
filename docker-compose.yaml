@@ -1,34 +1,35 @@
 version: '3.8'
 
 services:
+  # --- CONCRETE CORE: The "Void" (scratch-based) production container ---
   core:
     build: .
-    image: concrete-app:latest
+    image: blockmaker/concrete:latest
     container_name: concrete
-    ipc: "shareable"
+    ipc: "shareable" # Enables SHM access for external consumers
     environment:
       - CONCRETE_PORT=8080
       - CONCRETE_LOG=2
-    # Exposed for external triggers or cross-host synchronization
+    # Standard UDP mapping for ingestion and IPC triggers
     ports:
-      - "8080:8080/udp" # Main ingestion port
-      - "8081:8081/udp" # Auxiliary trigger port
-    healthcheck:
-      test: ["CMD", "ps", "aux", "|", "grep", "concrete_core"]
-      interval: 5s
-      timeout: 2s
-      retries: 3
+      - "8080:8080/udp" # Ingestion
+      - "8081:8081/udp" # Trigger
+    # Note: Traditional 'ps' healthchecks won't work in a scratch image 
+    # as there is no 'ps' binary. The container lifecycle follows the process.
 
+  # --- TESTER: The "Alpine" utility container for validation ---
   tester:
-    image: concrete-app:latest
+    image: alpine:latest  # <--- USAR ALPINE, NO LA IMAGEN DE CONCRETE
     container_name: tester
     depends_on:
       core:
         condition: service_started
     ipc: "service:core"
-    network_mode: "service:core" # Sharing network stack for low-latency loopback testing
+    network_mode: "service:core"
     volumes:
-      - ./scripts/test_functional.sh:/app/scripts/test_functional.sh
+      - ./scripts:/app/scripts
+      - ./bin:/app/bin
     working_dir: /app
-    # Executing the refined functional test suite
+    # IMPORTANTE: Forzamos el entrypoint a vacío para que 'command' funcione como queremos
+    entrypoint: "" 
     command: sh ./scripts/test_functional.sh

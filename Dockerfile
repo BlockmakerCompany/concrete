@@ -1,37 +1,46 @@
-# --- Stage 1: Builder ---
+# --- Stage 1: The Forge (Builder) ---
+# Compiles the x86_64 Assembly source into stripped, static binaries.
 FROM alpine:latest AS builder
 
-# Install build dependencies
-RUN apk add --no-cache nasm make binutils
+# 1. Install build dependencies
+RUN apk add --no-cache nasm binutils make
 
-# Copy source code
+# 2. Setup a non-privileged user for the final execution
+RUN adduser -D -u 1000 concrete_user
+
 WORKDIR /build
-COPY . .
 
-# Compile all targets (core and trigger)
+# 3. Copy source and build logic
+COPY Makefile ./
+COPY src/ ./src/
+
+# 4. Modular Compilation
+# We build both the core and the trigger
 RUN make clean && make
 
-# --- Stage 2: Runtime ---
-FROM alpine:latest
+# 5. Binary Hardening
+# Strip symbols to drop size to the absolute minimum (~10KB)
+RUN strip -s bin/concrete_core bin/concrete_trigger
 
-# Install util-linux for 'hexdump' and 'strings'
-RUN apk add --no-cache util-linux
+# --- Stage 2: The Void (Production Runner) ---
+# A zero-dependency scratch image. No shell, no logs, just the processor and you.
+FROM scratch
+
+# 1. Import user identity from the Forge
+COPY --from=builder /etc/passwd /etc/passwd
+
+# 2. Deploy high-performance static binary
+# We only copy the core. The trigger and scripts stay in the development layers.
+COPY --from=builder /build/bin/concrete_core /app/concrete_core
 
 WORKDIR /app
+USER 1000
 
-# Copy ALL generated binaries (core and trigger)
-COPY --from=builder /build/bin ./bin
-
-# Copy the scripts directory for internal container testing
-COPY --from=builder /build/scripts ./scripts
-
-# Ensure all scripts are executable
-RUN chmod +x ./scripts/*.sh
-
-# Expose ports for Concrete Ingestion and IPC
+# Concrete Ingestion Ports
+# 8080: Main UDP Ingestion
+# 8081: Local IPC Trigger
 EXPOSE 8080/udp
 EXPOSE 8081/udp
 
-# Start the core by default
-# Note: docker-compose will override this for the 'tester' service
-CMD ["./bin/concrete_core"]
+# Execute Concrete as the entrypoint
+ENTRYPOINT ["/app/concrete_core"]

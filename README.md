@@ -1,6 +1,8 @@
 # 🧱 Concrete
 ### High-Performance Memory Synchronization Agent (Pure x86_64 Assembly)
 
+[![Docker Image Size](https://img.shields.io/docker/image-size/blockmaker/concrete/latest)](https://hub.docker.com/r/blockmaker/concrete)
+[![Docker Pulls](https://img.shields.io/docker/pulls/blockmaker/concrete)](https://hub.docker.com/r/blockmaker/concrete)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Platform: Linux](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://kernel.org)
 [![Language: ASM](https://img.shields.io/badge/Language-x86__64_ASM-red.svg)](https://nasm.us)
@@ -151,6 +153,24 @@ Concrete bypasses `libc` and talks directly to the CPU using:
 * `sys_recvfrom`: Zero-copy network ingestion.
 * `sys_mmap`: Shared memory mapping.
 * `sys_write`: Minimalist logging to `stdout`.
+
+---
+
+## 🚀 Quick Start (Pre-built Image)
+
+If you don't want to build from source, you can pull the official hardened image directly from **Docker Hub**:
+
+```bash
+# Pull the ultra-minimalist (scratch-based) image
+docker pull blockmaker/concrete:latest
+
+# Run the core agent (Map your local /dev/shm for direct access)
+docker run -d \
+  --name concrete-core \
+  -p 8080:8080/udp \
+  --ipc="shareable" \
+  blockmaker/concrete:latest
+```
 
 ---
 
